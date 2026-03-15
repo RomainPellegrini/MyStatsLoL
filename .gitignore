@@ -1,0 +1,44 @@
+# ====================
+# Node / Angular
+# ====================
+node_modules/
+dist/
+out-tsc/
+.angular/
+.vscode/
+.idea/
+*.log
+
+# Environnements locaux
+src/environments/*.ts
+
+# ====================
+# Spring Boot / Java
+# ====================
+/target/
+/bin/
+/out/
+/*.iml
+/.idea/
+/.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+!mvnw
+!mvnw.cmd
+
+# Logs / fichiers temporaires
+*.log
+*.tmp
+*.class
+
+# ====================
+# PostgreSQL local
+# ====================
+*.db
+*.sql
+*.backup
+
+# ====================
+# Mac / Windows
+# ====================
+.DS_Store
+Thumbs.db
