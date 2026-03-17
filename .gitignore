@@ -42,3 +42,4 @@ src/environments/*.ts
 # ====================
 .DS_Store
 Thumbs.db
+
