@@ -25,7 +25,7 @@ public class MatchController {
 
     @GetMapping("/lastGame/{puuid}")
     public MatchSummaryDTO getLastGame(@PathVariable String puuid) {
-        System.out.println("aaa : " +puuid);
+
         return matchService.getLastMatch(puuid);
     }
 }

@@ -43,7 +43,9 @@ public record ParticipantRiotDTO(
 
         // Items
         int item0, int item1, int item2,
-        int item3, int item4, int item5, int item6){
+        int item3, int item4, int item5, int item6,
+
+        int totalMinionsKilled){
 
 
 }
