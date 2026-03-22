@@ -64,18 +64,7 @@ public class MatchService {
         log.info("Last matchId for puuid={} : {}", puuid, matchId);
 
         if (!matchRepository.existsByMatchId(matchId)) {
-            log.info("Match {} not found in DB, fetching from Riot API...", matchId);
-
-            Map<String, Object> matchMap = riotApiClient.getMatchById(matchId);
-            ObjectMapper mapper = new ObjectMapper();
-            MatchRiotDTO matchDto = mapper.convertValue(matchMap, MatchRiotDTO.class);
-
-            Match match = matchfromRiotDTO(matchDto);
-            matchRepository.save(match);
-
-            log.info("Match {} saved to DB.", matchId);
-
-            return MatchSummaryDTO.from(matchDto, puuid);
+           return stockMatch(matchId,puuid);
         }
 
 
@@ -84,6 +73,85 @@ public class MatchService {
         MatchRiotDTO matchDto = mapper.convertValue(matchMap,MatchRiotDTO.class);
 
         return MatchSummaryDTO.from(matchDto, puuid);
+    }
+
+    private MatchSummaryDTO stockMatch(String matchId,String puuid){
+
+        log.info("Match {} not found in DB, fetching from Riot API...", matchId);
+
+        Map<String, Object> matchMap = riotApiClient.getMatchById(matchId);
+        ObjectMapper mapper = new ObjectMapper();
+        MatchRiotDTO matchDto = mapper.convertValue(matchMap, MatchRiotDTO.class);
+
+        Match match = matchfromRiotDTO(matchDto);
+        matchRepository.save(match);
+
+        log.info("Match {} saved to DB.", matchId);
+
+        return MatchSummaryDTO.from(matchDto, puuid);
+
+    }
+
+    public List<MatchSummaryDTO> getLast10Matches(String puuid) {
+
+        List<String> matchIds = riotApiClient.getLastMatchsIds(puuid, 10);
+        List<MatchSummaryDTO> result = new ArrayList<>();
+
+        if(matchIds.size()==0){
+            throw new RuntimeException("No match found for this account");
+        }else if(matchIds.size()!=10){
+            throw new RuntimeException("Response contains more than 10 matchs");
+        }
+
+        for(String matchId : matchIds){
+            log.info("Processing matchId={}", matchId);
+            if (!matchRepository.existsByMatchId(matchId)) {
+                result.add(stockMatch(matchId,puuid));
+            }else{
+                Map<String, Object> matchMap = riotApiClient.getMatchById(matchId);
+                ObjectMapper mapper = new ObjectMapper();
+                MatchRiotDTO matchDto = mapper.convertValue(matchMap,MatchRiotDTO.class);
+                result.add(MatchSummaryDTO.from(matchDto, puuid));
+            }
+        }
+        if(result.size()!=10){
+            throw new RuntimeException("The final return does not have 10 matches");
+        }
+        return result;
+    }
+    public List<MatchSummaryDTO> catchUpMatches(String puuid) {
+
+        List<MatchSummaryDTO> result = new ArrayList<>();
+
+        int start = 0;
+        int count = 10;
+        boolean stop = false;
+
+        while (!stop) {
+
+            List<String> matchIds = riotApiClient.getStartMatchsIds(puuid, start, count);
+
+            if (matchIds.isEmpty()) {
+                break;
+            }
+
+            for (String matchId : matchIds) {
+
+                log.info("Checking matchId={}", matchId);
+
+                if (matchRepository.existsByMatchId(matchId)) {
+                    log.info("Match {} already exists in DB → stopping catch-up", matchId);
+                    stop = true;
+                    break;
+                }
+
+                result.add(stockMatch(matchId, puuid));
+            }
+
+            start += count;
+        }
+
+        return result;
     }
 
     private  Match matchfromRiotDTO(MatchRiotDTO dto) {
