@@ -42,5 +42,5 @@ src/environments/*.ts
 # ====================
 .DS_Store
 Thumbs.db
-
+.env
 backend/src/main/resources/application-local.properties
