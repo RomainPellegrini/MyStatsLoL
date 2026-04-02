@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Run unit tests
+        run: mvn test
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    if: |
+      github.ref == 'refs/heads/dev' ||
+      github.event.pull_request.base.ref == 'dev'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Run integration tests
+        run: mvn verify
+
+  e2e-tests:
+    name: E2E Playwright Tests
+    runs-on: ubuntu-latest
+
+    if: |
+      github.ref == 'refs/heads/main' ||
+      github.event.pull_request.base.ref == 'main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend dependencies
+        run: mvn clean install -DskipTests
+
+      - name: Start backend
+        run: mvn spring-boot:run &
+      
+      - name: Install frontend dependencies
+        run: |
+          cd Front-MyStatsLol-Angular
+          npm install
+
+      - name: Install Playwright browsers
+        run: |
+          cd Front-MyStatsLol-Angular
+          npx playwright install --with-deps
+
+      - name: Start Angular
+        run: |
+          cd frontend
+          npm run start &
+      
+      - name: Wait for frontend
+        run: npx wait-on http://localhost:4200
+
+      - name: Run Playwright tests
+        run: |
+          cd Front-MyStatsLol-Angular
+          npx playwright test
