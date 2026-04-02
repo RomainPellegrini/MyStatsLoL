@@ -1,6 +1,7 @@
 package com.mystatslol.backend.repository;
 
 import com.mystatslol.backend.entity.Player;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -18,6 +19,29 @@ public class PlayerRepositoryTest {
 
     @Autowired
     private PlayerRepository playerRepository;
+
+    private Player player1;
+    private Player player2;
+
+    @BeforeEach
+    void setup() {
+        // vider la table pour être sûr
+        playerRepository.deleteAll();
+
+        // créer des players pour les tests
+        player1 = new Player();
+        player1.setPuuid("puuid1");
+        player1.setGameName("Romain");
+        player1.setTagLine("EUW");
+
+        player2 = new Player();
+        player2.setPuuid("puuid2");
+        player2.setGameName("Lucas");
+        player2.setTagLine("NA");
+
+        playerRepository.save(player1);
+        playerRepository.save(player2);
+    }
 
     @Test
     void getAllPlayersTest(){
