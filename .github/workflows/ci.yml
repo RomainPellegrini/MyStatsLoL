@@ -24,11 +24,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Preload H2
-        run: mvn test -Dspring.profiles.active=test
+
       - name: Lancer mvn test
         working-directory: ./backend
-        run: mvn test --no-transfer-progress
+        run: mvn test -Dspring.profiles.active=test
         
   integration-tests:
     name: Tests Integration
