@@ -29,8 +29,8 @@ jobs:
 
       - name: Run unit tests
         run: |
-	  cd backend
-	  mvn verify
+          cd backend
+          mvn test
 
   integration-tests:
     name: Integration Tests
@@ -52,8 +52,8 @@ jobs:
 
       - name: Run integration tests
         run: |
-	  cd backend
-	  mvn verify
+          cd backend
+          mvn verify
 
   e2e-tests:
     name: E2E Playwright Tests
