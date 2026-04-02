@@ -9,7 +9,7 @@ on:
       - '**'
       
 jobs:
-unit-tests:
+  unit-tests:
     name: Tests unitaires
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ unit-tests:
         working-directory: ./backend
         run: mvn test --no-transfer-progress
         
-integration-tests:
+  integration-tests:
     name: Tests Integration
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -48,7 +48,7 @@ integration-tests:
       - name: Lancer mvn verify
         working-directory: ./backend
         run: mvn verify --no-transfer-progress
-e2e-tests:
+  e2e-tests:
     name: Test E2E
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
