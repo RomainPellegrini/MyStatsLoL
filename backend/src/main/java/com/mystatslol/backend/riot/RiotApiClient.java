@@ -29,6 +29,9 @@ public class RiotApiClient {
     public RiotApiClient() {
         this.restTemplate = new RestTemplate();
     }
+    public RiotApiClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     private <T> T get(String url, Class<T> responseType) {
         log.debug("GET {}", url);
