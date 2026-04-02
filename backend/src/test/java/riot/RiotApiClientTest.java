@@ -1,10 +1,12 @@
-package com.mystatslol.backend.integration;
+package riot;
 
 import com.mystatslol.backend.riot.RiotApiClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -22,7 +24,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class RiotApiClientTest {
+
     @Mock
     private RestTemplate restTemplate;
 
@@ -31,11 +35,9 @@ public class RiotApiClientTest {
 
     @BeforeEach
     void setup() {
-        restTemplate = mock(RestTemplate.class);
-        riotApiClient = new RiotApiClient(restTemplate);
-
         ReflectionTestUtils.setField(riotApiClient, "API_KEY", "test_key");
     }
+
 
     @Test
     void getAccountByPuuidTest() {
