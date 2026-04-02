@@ -28,7 +28,9 @@ jobs:
           java-version: 17
 
       - name: Run unit tests
-        run: mvn test
+        run: |
+	  cd backend
+	  mvn verify
 
   integration-tests:
     name: Integration Tests
@@ -49,7 +51,9 @@ jobs:
           java-version: 17
 
       - name: Run integration tests
-        run: mvn verify
+        run: |
+	  cd backend
+	  mvn verify
 
   e2e-tests:
     name: E2E Playwright Tests
