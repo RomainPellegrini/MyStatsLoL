@@ -27,7 +27,7 @@ jobs:
 
       - name: Lancer mvn test
         working-directory: ./backend
-        run: mvn test -Dspring.profiles.active=test
+        run: mvn test --no-transfer-progress
         
   integration-tests:
     name: Tests Integration
