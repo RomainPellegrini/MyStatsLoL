@@ -1,108 +1,105 @@
-name: CI
-
+name: CI 
+ 
 on:
   push:
     branches:
       - '**'
   pull_request:
     branches:
-      - dev
-      - main
-
+      - '**'
+      
 jobs:
-
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-
+unit-tests:
+    name: Tests unitaires
     if: github.event_name == 'push'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Run unit tests
-        run: |
-          cd backend
-          mvn test
-
-  integration-tests:
-    name: Integration Tests
     runs-on: ubuntu-latest
-
-    if: |
-      github.ref == 'refs/heads/dev' ||
-      github.event.pull_request.base.ref == 'dev'
-
+ 
     steps:
-      - name: Checkout repository
+      - name: Checkout du code
         uses: actions/checkout@v4
-
+ 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Run integration tests
-        run: |
-          cd backend
-          mvn verify
-
-  e2e-tests:
-    name: E2E Playwright Tests
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+ 
+      - name: Lancer mvn test
+        working-directory: ./backend
+        run: mvn test --no-transfer-progress
+        
+integration-tests:
+    name: Tests Integration
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-
-    if: |
-      github.ref == 'refs/heads/main' ||
-      github.event.pull_request.base.ref == 'main'
-
+ 
     steps:
-      - name: Checkout repository
+      - name: Checkout du code
         uses: actions/checkout@v4
-
-      - name: Setup Java
+ 
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Setup Node
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+ 
+      - name: Lancer mvn verify
+        working-directory: ./backend
+        run: mvn verify --no-transfer-progress
+e2e-tests:
+    name: Test E2E
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+ 
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-
-      - name: Install backend dependencies
-        run: mvn clean install -DskipTests
-
-      - name: Start backend
-        run: mvn spring-boot:run &
-      
-      - name: Install frontend dependencies
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./Front-MyStatsLol-Angular/package-lock.json
+ 
+      - name: Installer les dépendances npm
+        working-directory: ./Front-MyStatsLol-Angular
+        run: npm ci
+ 
+      - name: Installer les navigateurs Playwright
+        working-directory: ./Front-MyStatsLol-Angular
+        run: npx playwright install --with-deps
+ 
+      - name: Setup Java 21 (pour le backend)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+ 
+      - name: Démarrer le backend en arrière-plan
+        working-directory: ./backend
+        run: mvn spring-boot:run --no-transfer-progress &
+ 
+      - name: Attendre que le backend soit prêt
         run: |
-          cd Front-MyStatsLol-Angular
-          npm install
-
-      - name: Install Playwright browsers
-        run: |
-          cd Front-MyStatsLol-Angular
-          npx playwright install --with-deps
-
-      - name: Start Angular
-        run: |
-          cd frontend
-          npm run start &
-      
-      - name: Wait for frontend
-        run: npx wait-on http://localhost:4200
-
-      - name: Run Playwright tests
-        run: |
-          cd Front-MyStatsLol-Angular
-          npx playwright test
+          echo "En attente du backend..."
+          for i in {1..30}; do
+            curl -s http://localhost:8080/actuator/health && break || sleep 5
+          done
+ 
+      - name: Lancer les tests Playwright
+        working-directory: ./Front-MyStatsLol-Angular
+        run: npx playwright test
+ 
+      - name: Upload du rapport Playwright
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ./Front-MyStatsLol-Angular/playwright-report/
+          retention-days: 7
+ 
+ 
