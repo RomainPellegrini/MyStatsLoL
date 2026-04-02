@@ -25,11 +25,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Preload H2
-        run: |
-         java -cp target/test-classes:target/classes org.h2.tools.RunScript \
-         -url jdbc:h2:mem:testdb \
-         -user sa \
-         -script src/test/resources/data.sql
+        run: mvn test -Dspring.profiles.active=test
       - name: Lancer mvn test
         working-directory: ./backend
         run: mvn test --no-transfer-progress
