@@ -50,7 +50,7 @@ jobs:
         run: mvn verify --no-transfer-progress
   e2e-tests:
     name: Test E2E
-    if: github.event_name == 'push'
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
 
     services:
@@ -106,7 +106,7 @@ jobs:
       - name: Attendre que le backend soit prêt
         run: |
           echo "En attente du backend..."
-          for i in {1..60}; do
+          for i in {1..20}; do
             if curl -s http://localhost:8080/actuator/health | grep -q UP; then
               echo "Backend is ready!"
               exit 0
