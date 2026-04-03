@@ -86,8 +86,13 @@ jobs:
       - name: Attendre que le backend soit prêt
         run: |
           echo "En attente du backend..."
-          for i in {1..30}; do
-            curl -s http://localhost:8080/actuator/health && break || sleep 5
+          for i in {1..60}; do
+            if curl -s http://localhost:8080/actuator/health | grep UP; then
+              echo "Backend is ready!"
+              break
+            fi
+            echo "Backend not ready yet..."
+            sleep 5
           done
       - name: ask Back end
         working-directory: ./Front-MyStatsLol-Angular
