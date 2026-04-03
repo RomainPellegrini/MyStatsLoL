@@ -1,7 +1,8 @@
 <h2>Page des matchs</h2>
 <p>liste des matchs aa</p>
 
-<button (click)="callTest()">Tester GET</button>
+<input #puuidPlayer type="text" />
+<button (click)="retrievePlayer(puuidPlayer.value)">Tester GET</button>
 @if (result !== null) {
-  <p>{{ result }}</p>
+  <p id="result">{{ result }}</p>
 }

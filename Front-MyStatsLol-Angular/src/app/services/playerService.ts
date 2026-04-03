@@ -5,12 +5,12 @@ import { Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root',
 })
-export class TestService {
+export class PlayerService {
   private baseUrl = 'http://localhost:8080'; // Ton backend Spring Boot
 
   constructor(private http: HttpClient) {}
 
-  getTest(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/test`, { responseType: 'text' });
+  getPlayerByPuuid(value : string): Observable<string> {
+    return this.http.get(`${this.baseUrl}/players/playerByPuuid/${value}`, { responseType: 'text' });
   }
 }
