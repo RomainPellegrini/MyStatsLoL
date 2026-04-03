@@ -81,9 +81,8 @@ jobs:
  
       - name: Démarrer le backend en arrière-plan
         working-directory: ./backend
-        run: mvn spring-boot:run --no-transfer-progress &
-      - name: Check running processes
-        run: ps aux | grep java
+        run: mvn spring-boot:run --no-transfer-progress 2>&1 | tee /tmp/backend.log &
+
       - name: Attendre que le backend soit prêt
         run: |
           echo "En attente du backend..."
