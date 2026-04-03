@@ -100,6 +100,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/${{ secrets.POSTGRES_DB }}
           SPRING_DATASOURCE_USERNAME: ${{ secrets.POSTGRES_USER }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          RIOT_API_KEY: ${{ secrets.RIOT_API_KEY }}
         run: mvn spring-boot:run --no-transfer-progress > /tmp/backend.log 2>&1 &
 
       - name: Attendre que le backend soit prêt
