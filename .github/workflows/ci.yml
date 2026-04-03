@@ -52,59 +52,80 @@ jobs:
     name: Test E2E
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
- 
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
- 
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: ./Front-MyStatsLol-Angular/package-lock.json
- 
+
       - name: Installer les dépendances npm
         working-directory: ./Front-MyStatsLol-Angular
         run: npm ci
- 
+
       - name: Installer les navigateurs Playwright
         working-directory: ./Front-MyStatsLol-Angular
         run: npx playwright install --with-deps
- 
+
       - name: Setup Java 21 (pour le backend)
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
- 
+
       - name: Démarrer le backend en arrière-plan
         working-directory: ./backend
-        run: mvn spring-boot:run --no-transfer-progress &
- 
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/${{ secrets.POSTGRES_DB }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.POSTGRES_USER }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          RIOT_API_KEY: ${{ secrets.RIOT_API_KEY }}
+        run: mvn spring-boot:run --no-transfer-progress > /tmp/backend.log 2>&1 &
+
       - name: Attendre que le backend soit prêt
         run: |
           echo "En attente du backend..."
-          for i in {1..30}; do
-            curl -s http://localhost:8080/actuator/health && break || sleep 5
+          for i in {1..20}; do
+            if curl -s http://localhost:8080/actuator/health | grep -q UP; then
+              echo "Backend is ready!"
+              exit 0
+            fi
+            echo "Tentative $i/60..."
+            tail -100 /tmp/backend.log 2>/dev/null || true
+            sleep 5
           done
-      - name: Build Angular app
-        working-directory: ./Front-MyStatsLol-Angular
-        run: npm run build -- --prod
+          echo "Backend non démarré après 300s"
+          cat /tmp/backend.log
+          exit 1
 
-      - name: Serve built Angular app
-        working-directory: ./Front-MyStatsLol-Angular
-        run: npx http-server ./frontend/dist/frontend -p 4200 &
-
-      - name: Wait for server
-        working-directory: ./Front-MyStatsLol-Angular
-        run: npx wait-on http://localhost:4200
+      - name: Ask backend
+        run: curl http://localhost:8080/players/playerByPuuid/fawulsCpzlkgkfMcs1FW2JKvhE9HR1OnTmv8nsztXLQdtnrYWdJS1Y_Q9AnH8q6RSyJZhF71EZczXA
 
       - name: Lancer les tests Playwright
         working-directory: ./Front-MyStatsLol-Angular
         run: npx playwright test
- 
+
       - name: Upload du rapport Playwright
         if: always()
         uses: actions/upload-artifact@v4
