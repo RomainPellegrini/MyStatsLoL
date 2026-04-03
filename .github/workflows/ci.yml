@@ -55,7 +55,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18-alpine
         env:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
@@ -111,7 +111,7 @@ jobs:
               exit 0
             fi
             echo "Tentative $i/60..."
-            tail -20 /tmp/backend.log 2>/dev/null || true
+            tail -100 /tmp/backend.log 2>/dev/null || true
             sleep 5
           done
           echo "Backend non démarré après 300s"
