@@ -89,6 +89,9 @@ jobs:
           for i in {1..30}; do
             curl -s http://localhost:8080/actuator/health && break || sleep 5
           done
+      - name: ask Back end
+        working-directory: ./Front-MyStatsLol-Angular
+        run: curl http://localhost:8080/players/playerByPuuid/fawulsCpzlkgkfMcs1FW2JKvhE9HR1OnTmv8nsztXLQdtnrYWdJS1Y_Q9AnH8q6RSyJZhF71EZczXA
 
       - name: Lancer les tests Playwright
         working-directory: ./Front-MyStatsLol-Angular
