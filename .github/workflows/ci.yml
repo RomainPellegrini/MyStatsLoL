@@ -92,7 +92,7 @@ jobs:
               exit 0
             fi
             echo "Tentative $i/60..."
-            tail -3 /tmp/backend.log 2>/dev/null || true
+            tail -100 /tmp/backend.log 2>/dev/null || true
             sleep 5
           done
           echo "Backend non démarré après 300s"
