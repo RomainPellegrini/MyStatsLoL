@@ -89,11 +89,15 @@ jobs:
           for i in {1..60}; do
             if curl -s http://localhost:8080/actuator/health | grep UP; then
               echo "Backend is ready!"
-              break
+              exit 0
             fi
-            echo "Backend not ready yet..."
+            echo "Tentative $i/60..."
+            tail -3 /tmp/backend.log 2>/dev/null || true
             sleep 5
           done
+          echo "Backend non démarré après 300s"
+          cat /tmp/backend.log
+          exit 1
       - name: ask Back end
         working-directory: ./Front-MyStatsLol-Angular
         run: curl http://localhost:8080/players/playerByPuuid/fawulsCpzlkgkfMcs1FW2JKvhE9HR1OnTmv8nsztXLQdtnrYWdJS1Y_Q9AnH8q6RSyJZhF71EZczXA
