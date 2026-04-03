@@ -50,7 +50,7 @@ jobs:
         run: mvn verify --no-transfer-progress
   e2e-tests:
     name: Test E2E
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
  
     steps:
@@ -89,17 +89,6 @@ jobs:
           for i in {1..30}; do
             curl -s http://localhost:8080/actuator/health && break || sleep 5
           done
-      - name: Build Angular app
-        working-directory: ./Front-MyStatsLol-Angular
-        run: npm run build -- --prod
-
-      - name: Serve built Angular app
-        working-directory: ./Front-MyStatsLol-Angular
-        run: npx http-server ./frontend/dist/frontend -p 4200 &
-
-      - name: Wait for server
-        working-directory: ./Front-MyStatsLol-Angular
-        run: npx wait-on http://localhost:4200
 
       - name: Lancer les tests Playwright
         working-directory: ./Front-MyStatsLol-Angular

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('click button should call backend and display result', async ({ page }) => {
-  await page.goto('http://localhost:4200');
+  await page.goto('/');
 
   await page.fill(
     'input',
