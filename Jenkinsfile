@@ -1,10 +1,10 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:24.0.5-cli' // Image officielle Docker CLI
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
+    agent any
+
+    environment {
+        COMPOSE_PROJECT_NAME = 'mystatslol'
     }
+
     stages {
         stage('Checkout') {
             steps {
@@ -28,7 +28,17 @@ pipeline {
 
     post {
         always {
-            sh 'docker-compose -f docker-compose.yml down'
+            node {
+                // Stoppe et nettoie les conteneurs Docker
+                sh 'docker-compose -f docker-compose.yml down || true'
+
+                // Copie des rapports JUnit (optionnel)
+                sh '''
+                    mkdir -p backend-reports
+                    docker cp $(docker-compose -f docker-compose.yml ps -q backend):/app/target/surefire-reports/. backend-reports/ || true
+                '''
+                junit 'backend-reports/*.xml'
+            }
         }
     }
 }
