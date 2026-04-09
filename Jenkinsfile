@@ -1,10 +1,9 @@
 pipeline {
-     agent { label 'Jenkins Worker' }
-     tools {
-        maven 'Maven 4.0.0'
-        jdk 'JDK'
+    agent {
+        docker {
+            image 'maven:4.0.0-openjdk-21' // Maven + Java 21
+        }
     }
-
 
     stages {
 
@@ -16,8 +15,8 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                dir('backend') {
-                    sh 'mvn test'
+                dir('backend') { // se place dans le dossier backend
+                    sh 'mvn clean test'
                 }
             }
         }
