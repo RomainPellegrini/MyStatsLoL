@@ -12,7 +12,7 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/RomainPellegrini/MyStatsLoL.git'
             }
         }
-        stage('Checkout Backend') {
+        stage('Checkout Back') {
             steps {
                 sh 'cd backend'
             }
