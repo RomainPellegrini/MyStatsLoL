@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'maven:4.0.0-openjdk-21'
+        }
+    }
 
     stages {
 
@@ -8,16 +12,20 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/RomainPellegrini/MyStatsLoL.git'
             }
         }
-        stage('Checkout Backend') {
-            steps {
-                sh 'cd backend'
-            }
-        }
+
         stage('Run Tests') {
             steps {
-                sh 'mvn test'
+                dir('backend') {
+                    sh 'mvn test'
+                }
             }
         }
 
+    }
+
+    post {
+        always {
+            junit 'backend/target/surefire-reports/*.xml'
+        }
     }
 }
