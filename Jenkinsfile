@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USERNAME = 'ton_username_dockerhub'
+        DOCKERHUB_USERNAME = 'romainpellegrini'
         APP_IMAGE = "${DOCKERHUB_USERNAME}/mystatslol-app"
         DB_IMAGE  = "${DOCKERHUB_USERNAME}/mystatslol-db"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
