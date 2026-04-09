@@ -1,9 +1,10 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:4.0.0-openjdk-21'
-        }
+     agent { label 'Jenkins Worker' }
+     tools {
+        maven 'Maven 4.0.0'
+        jdk 'JDK'
     }
+
 
     stages {
 
