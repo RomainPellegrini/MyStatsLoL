@@ -24,7 +24,10 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                withCredentials([
+                  withCredentials([
+                    string(credentialsId: 'POSTGRES_USER', variable: 'POSTGRES_USER'),
+                    string(credentialsId: 'POSTGRES_PASSWORD', variable: 'POSTGRES_PASSWORD'),
+                    string(credentialsId: 'POSTGRES_DB', variable: 'POSTGRES_DB'),
                     string(credentialsId: 'RIOT_API_KEY', variable: 'RIOT_API_KEY')
                 ]) {
                     sh 'docker-compose -f docker-compose.yml exec -T backend mvn clean test'
