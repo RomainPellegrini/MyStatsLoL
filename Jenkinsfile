@@ -28,17 +28,15 @@ pipeline {
 
     post {
         always {
-            node {
-                // Stoppe et nettoie les conteneurs Docker
-                sh 'docker-compose -f docker-compose.yml down || true'
+            // Stoppe et nettoie les conteneurs Docker
+            sh 'docker-compose -f docker-compose.yml down || true'
 
-                // Copie des rapports JUnit (optionnel)
-                sh '''
-                    mkdir -p backend-reports
-                    docker cp $(docker-compose -f docker-compose.yml ps -q backend):/app/target/surefire-reports/. backend-reports/ || true
-                '''
-                junit 'backend-reports/*.xml'
-            }
+            // Copie des rapports JUnit (optionnel)
+            sh '''
+                mkdir -p backend-reports
+                docker cp $(docker-compose -f docker-compose.yml ps -q backend):/app/target/surefire-reports/. backend-reports/ || true
+            '''
+            junit 'backend-reports/*.xml'
         }
     }
 }
