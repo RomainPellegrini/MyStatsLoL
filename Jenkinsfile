@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        COMPOSE_PROJECT_NAME = 'mystatslol'
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -14,24 +10,35 @@ pipeline {
 
         stage('Build & Start Services') {
             steps {
-                sh 'docker-compose -f docker-compose.yml build'
-                sh 'docker-compose -f docker-compose.yml up -d'
+                withCredentials([
+                    string(credentialsId: 'POSTGRES_USER', variable: 'POSTGRES_USER'),
+                    string(credentialsId: 'POSTGRES_PASSWORD', variable: 'POSTGRES_PASSWORD'),
+                    string(credentialsId: 'POSTGRES_DB', variable: 'POSTGRES_DB'),
+                    string(credentialsId: 'RIOT_API_KEY', variable: 'RIOT_API_KEY')
+                ]) {
+                    sh 'docker-compose -f docker-compose.yml build'
+                    sh 'docker-compose -f docker-compose.yml up -d'
+                }
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh 'docker-compose -f docker-compose.yml exec -T backend mvn clean test'
+                withCredentials([
+                    string(credentialsId: 'RIOT_API_KEY', variable: 'RIOT_API_KEY')
+                ]) {
+                    sh 'docker-compose -f docker-compose.yml exec -T backend mvn clean test'
+                }
             }
         }
     }
 
     post {
         always {
-            // Stoppe et nettoie les conteneurs Docker
+            // Nettoyage des conteneurs
             sh 'docker-compose -f docker-compose.yml down || true'
 
-            // Copie des rapports JUnit (optionnel)
+            // Récupération des rapports JUnit
             sh '''
                 mkdir -p backend-reports
                 docker cp $(docker-compose -f docker-compose.yml ps -q backend):/app/target/surefire-reports/. backend-reports/ || true
