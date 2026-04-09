@@ -38,8 +38,8 @@ pipeline {
                             --build-arg POSTGRES_DB="$POSTGRES_DB" \
                             --build-arg RIOT_API_KEY="$RIOT_API_KEY"
 
-                        docker tag $(docker compose images -q app) ${APP_IMAGE}:${IMAGE_TAG}
-                        docker tag $(docker compose images -q app) ${APP_IMAGE}:latest
+                        docker tag mystatslol-app:latest ${APP_IMAGE}:${IMAGE_TAG}
+                        docker tag mystatslol-app:latest ${APP_IMAGE}:latest
 
                         docker push ${APP_IMAGE}:${IMAGE_TAG}
                         docker push ${APP_IMAGE}:latest
