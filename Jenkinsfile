@@ -61,3 +61,5 @@ pipeline {
         failure {
             echo "❌ Le pipeline a échoué — vérifie les logs ci-dessus"
         }
+    }
+}
