@@ -1,0 +1,27 @@
+pipeline {
+    agent any
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/RomainPellegrini/MyStatsLoL.git'
+            }
+        }
+        stage('Checkout Back') {
+            steps {
+                sh 'cd backend'
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+    }
+}
