@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, signal } from '@angular/core';
-import { TestService } from '../../services/testService';
+import { PlayerService } from '../../services/playerService';
 
 
 @Component({
@@ -11,12 +11,12 @@ import { TestService } from '../../services/testService';
 export class Matchpage {
   result: string | null = null;
   constructor(
-    private testService: TestService,
+    private testService: PlayerService,
     private cdr: ChangeDetectorRef,
   ) {}
 
-  callTest() {
-    this.testService.getTest().subscribe((res) => {
+  retrievePlayer(puuid : string) {
+    this.testService.getPlayerByPuuid(puuid).subscribe((res) => {
       this.result = res;
       this.cdr.detectChanges();
       console.log('result : ' + this.result);

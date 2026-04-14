@@ -1,8 +1,12 @@
 package com.mystatslol.backend.service;
 
+import com.mystatslol.backend.DTO.MatchParticipantDetailDTO;
 import com.mystatslol.backend.DTO.MatchSummaryDTO;
+import com.mystatslol.backend.DTO.ParticipantDTO;
 import com.mystatslol.backend.DTO.riotresponse.MatchRiotDTO;
+import com.mystatslol.backend.DTO.riotresponse.ParticipantRiotDTO;
 import com.mystatslol.backend.entity.Match;
+import com.mystatslol.backend.entity.MatchParticipant;
 import com.mystatslol.backend.exception.MatchNotFoundException;
 import com.mystatslol.backend.repository.MatchParticipantRepository;
 import com.mystatslol.backend.repository.MatchRepository;
@@ -20,8 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -57,56 +63,149 @@ public class MatchService {
 
         log.info("Last matchId for puuid={} : {}", puuid, matchId);
 
+        if (!matchRepository.existsByMatchId(matchId)) {
+           return stockMatch(matchId,puuid);
+        }
 
-       /* if (matchRepository.existsByMatchId(matchId)) {
-            log.info("Match {} already stored, skipping fetch.", matchId);
-            return matchRepository.findById(matchId)
-                    .orElseThrow(() -> new MatchNotFoundException(matchId));
-        }*/
 
-        // 3. Appel Riot pour le détail de la partie
         Map<String, Object> matchMap = riotApiClient.getMatchById(matchId);
         ObjectMapper mapper = new ObjectMapper();
         MatchRiotDTO matchDto = mapper.convertValue(matchMap,MatchRiotDTO.class);
 
-
-        // 4. Mapping + persistance
-       // Match match = mapAndSave(matchDto);
-        //log.info("Match {} stored with {} participants.", matchId, match.getParticipants().size());
-
-        return convertRiotMatchtoSummaryMatch(matchDto);
+        return MatchSummaryDTO.from(matchDto, puuid);
     }
 
-    private MatchSummaryDTO convertRiotMatchtoSummaryMatch(MatchRiotDTO matchRiotDTO){
-        String gameMode ="";
-        switch (matchRiotDTO.info().queueId()){
-            case 400 :
-                gameMode = "Draft";
-                break;
-            case 420 :
-                gameMode= "SoloQ";
-                break;
-            case 430 :
-                gameMode= "Blind";
-                break;
-            case 440 :
-                gameMode= "Flex";
-                break;
-            default:
-                gameMode="other";
-                break;
+    private MatchSummaryDTO stockMatch(String matchId,String puuid){
+
+        log.info("Match {} not found in DB, fetching from Riot API...", matchId);
+
+        Map<String, Object> matchMap = riotApiClient.getMatchById(matchId);
+        ObjectMapper mapper = new ObjectMapper();
+        MatchRiotDTO matchDto = mapper.convertValue(matchMap, MatchRiotDTO.class);
+
+        Match match = matchfromRiotDTO(matchDto);
+        matchRepository.save(match);
+
+        log.info("Match {} saved to DB.", matchId);
+
+        return MatchSummaryDTO.from(matchDto, puuid);
+
+    }
+
+    public List<MatchSummaryDTO> getLast10Matches(String puuid) {
+
+        List<String> matchIds = riotApiClient.getLastMatchsIds(puuid, 10);
+        List<MatchSummaryDTO> result = new ArrayList<>();
+
+        if(matchIds.size()==0){
+            throw new RuntimeException("No match found for this account");
+        }else if(matchIds.size()!=10){
+            throw new RuntimeException("Response contains more than 10 matchs");
         }
 
-        MatchSummaryDTO matchSummaryDTO = new MatchSummaryDTO(
-                matchRiotDTO.metadata().matchId(),
-                matchRiotDTO.info().gameCreation(),
-                matchRiotDTO.info().gameDuration(),
-                gameMode,
-                null,
-                null
+        for(String matchId : matchIds){
+            log.info("Processing matchId={}", matchId);
+            if (!matchRepository.existsByMatchId(matchId)) {
+                result.add(stockMatch(matchId,puuid));
+            }else{
+                Map<String, Object> matchMap = riotApiClient.getMatchById(matchId);
+                ObjectMapper mapper = new ObjectMapper();
+                MatchRiotDTO matchDto = mapper.convertValue(matchMap,MatchRiotDTO.class);
+                result.add(MatchSummaryDTO.from(matchDto, puuid));
+            }
+        }
+        if(result.size()!=10){
+            throw new RuntimeException("The final return does not have 10 matches");
+        }
+        return result;
+    }
+    public List<MatchSummaryDTO> catchUpMatches(String puuid) {
 
-        );
+        List<MatchSummaryDTO> result = new ArrayList<>();
 
-        return matchSummaryDTO;
+        int start = 0;
+        int count = 10;
+        boolean stop = false;
+
+        while (!stop) {
+
+            List<String> matchIds = riotApiClient.getStartMatchsIds(puuid, start, count);
+
+            if (matchIds.isEmpty()) {
+                break;
+            }
+
+            for (String matchId : matchIds) {
+
+                log.info("Checking matchId={}", matchId);
+
+                if (matchRepository.existsByMatchId(matchId)) {
+                    log.info("Match {} already exists in DB → stopping catch-up", matchId);
+                    stop = true;
+                    break;
+                }
+
+                result.add(stockMatch(matchId, puuid));
+            }
+
+            start += count;
+        }
+
+        return result;
+    }
+
+    private  Match matchfromRiotDTO(MatchRiotDTO dto) {
+        Match match = new Match();
+        match.setMatchId( dto.metadata().matchId());
+        match.setGameCreation(dto.info().gameCreation());
+        match.setGameDuration(dto.info().gameDuration());
+        match.setGameVersion(dto.info().gameVersion());
+        match.setQueueId(dto.info().queueId());
+        match.setGameMode(dto.info().gameMode());
+
+        List<MatchParticipant> participants = dto.info().participants()
+                .stream()
+                .map(p -> matchParticipantfromRiotDTO(p, match))
+                .collect(Collectors.toList());
+
+        match.setParticipants(participants);
+        return match;
+    }
+
+    private MatchParticipant matchParticipantfromRiotDTO(ParticipantRiotDTO p, Match match) {
+        MatchParticipant mp = new MatchParticipant();
+        mp.setMatch(match);
+        mp.setPuuid(p.puuid());
+        mp.setRiotIdGameName(p.riotIdGameName());
+        mp.setRiotIdTagline(p.riotIdTagline());
+
+        mp.setChampionId(p.championId());
+        mp.setChampionName(p.championName());
+        mp.setChampLevel(p.champLevel());
+
+        mp.setTeamId(p.teamId());
+        mp.setTeamPosition(p.teamPosition());
+        mp.setWin(p.win());
+
+        mp.setKills(p.kills());
+        mp.setDeaths(p.deaths());
+        mp.setAssists(p.assists());
+
+        mp.setGoldEarned(p.goldEarned());
+        mp.setTotalDamageDealtToChampions(p.totalDamageDealtToChampions());
+
+        mp.setItem0(p.item0());
+        mp.setItem1(p.item1());
+        mp.setItem2(p.item2());
+        mp.setItem3(p.item3());
+        mp.setItem4(p.item4());
+        mp.setItem5(p.item5());
+        mp.setItem6(p.item6());
+
+        mp.setSummoner1Id(p.summoner1Id());
+        mp.setSummoner2Id(p.summoner2Id());
+
+        mp.setTotalMinionsKilled(p.totalMinionsKilled());
+        return mp;
     }
 }

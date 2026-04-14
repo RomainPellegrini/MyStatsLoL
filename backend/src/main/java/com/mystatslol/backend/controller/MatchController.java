@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
@@ -25,7 +27,18 @@ public class MatchController {
 
     @GetMapping("/lastGame/{puuid}")
     public MatchSummaryDTO getLastGame(@PathVariable String puuid) {
-        System.out.println("aaa : " +puuid);
+
         return matchService.getLastMatch(puuid);
     }
+
+    @GetMapping("/last10Games/{puuid}")
+    public List<MatchSummaryDTO> getLastGames(@PathVariable String puuid) {
+        return matchService.getLast10Matches(puuid);
+    }
+    @GetMapping("/catchUpGames/{puuid}")
+    public List<MatchSummaryDTO> catchUpGames(@PathVariable String puuid) {
+        return matchService.catchUpMatches(puuid);
+    }
+
+
 }
