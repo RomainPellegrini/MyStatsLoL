@@ -3,11 +3,15 @@ package main
 import (
 	"net/http"
 
+	"champion-api-go/kafka"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	InitDB()
+
+	go kafka.StartConsumer()
 
 	r := gin.Default()
 

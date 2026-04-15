@@ -24,10 +24,11 @@ public class PlayerService {
     private final String BASE_URL = "https://europe.api.riotgames.com";
     private final PlayerRepository playerRepository;
     private final RiotApiClient riotApiClient;
-
-    public PlayerService(PlayerRepository playerRepository, RiotApiClient riotApiClient) {
+    private final KafkaProducerService kafkaProducerService;
+    public PlayerService(PlayerRepository playerRepository, RiotApiClient riotApiClient, KafkaProducerService kafkaProducerService) {
         this.playerRepository = playerRepository;
         this.riotApiClient = riotApiClient;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
 
@@ -43,8 +44,9 @@ public class PlayerService {
         p.setGameName(name);
         p.setTagLine(tag);
         playerRepository.save(p);
-
-        return new PlayerDTO(puuid,name, tag);
+        PlayerDTO playerDTO = new PlayerDTO(puuid,name, tag);
+        kafkaProducerService.sendPlayer(playerDTO);
+        return playerDTO;
     }
 
     public PlayerDTO getPlayerByName(String gameName, String tagLine) {
@@ -59,7 +61,9 @@ public class PlayerService {
         p.setTagLine(tagLine);
         playerRepository.save(p);
 
-        return new PlayerDTO(puuid,gameName, tagLine);
+        PlayerDTO playerDTO = new PlayerDTO(puuid,gameName, tagLine);
+        kafkaProducerService.sendPlayer(playerDTO);
+        return playerDTO;
     }
 
     public void deletePlayerByPuuid(String puuid) {
@@ -68,5 +72,9 @@ public class PlayerService {
         } else {
             throw new RuntimeException("Player with puuid : " + puuid + " not found.");
         }
+    }
+
+    private void sendToKafka(PlayerDTO player){
+
     }
 }
