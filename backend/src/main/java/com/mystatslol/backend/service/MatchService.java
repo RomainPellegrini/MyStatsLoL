@@ -39,14 +39,16 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final MatchParticipantRepository matchParticipantRepository;
     private final RiotApiClient riotApiClient;
+    private final KafkaProducerService kafkaProducerService;
 
     private static final Logger log = LoggerFactory.getLogger(MatchService.class);
 
 
-    public MatchService(MatchRepository matchRepository, MatchParticipantRepository matchParticipantRepository, RiotApiClient riotApiClient) {
+    public MatchService(MatchRepository matchRepository, MatchParticipantRepository matchParticipantRepository, RiotApiClient riotApiClient, KafkaProducerService kafkaProducerService) {
         this.matchRepository = matchRepository;
         this.matchParticipantRepository = matchParticipantRepository;
         this.riotApiClient = riotApiClient;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
 
@@ -71,8 +73,9 @@ public class MatchService {
         Map<String, Object> matchMap = riotApiClient.getMatchById(matchId);
         ObjectMapper mapper = new ObjectMapper();
         MatchRiotDTO matchDto = mapper.convertValue(matchMap,MatchRiotDTO.class);
-
-        return MatchSummaryDTO.from(matchDto, puuid);
+        MatchSummaryDTO matchSummaryDTO =  MatchSummaryDTO.from(matchDto, puuid);
+        kafkaProducerService.sendMatch(matchSummaryDTO);
+        return matchSummaryDTO;
     }
 
     private MatchSummaryDTO stockMatch(String matchId,String puuid){
@@ -117,8 +120,12 @@ public class MatchService {
         if(result.size()!=10){
             throw new RuntimeException("The final return does not have 10 matches");
         }
+        for (MatchSummaryDTO matchSummaryDTO : result){
+            kafkaProducerService.sendMatch(matchSummaryDTO);
+        }
         return result;
     }
+
     public List<MatchSummaryDTO> catchUpMatches(String puuid) {
 
         List<MatchSummaryDTO> result = new ArrayList<>();
@@ -150,7 +157,9 @@ public class MatchService {
 
             start += count;
         }
-
+        for (MatchSummaryDTO matchSummaryDTO : result){
+            kafkaProducerService.sendMatch(matchSummaryDTO);
+        }
         return result;
     }
 
