@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"champion-api-go/kafka"
 
@@ -10,7 +11,7 @@ import (
 
 func main() {
 	InitDB()
-
+	go kafka.WaitKafka(os.Getenv("KAFKA_BROKER"))
 	go kafka.StartConsumer()
 
 	r := gin.Default()

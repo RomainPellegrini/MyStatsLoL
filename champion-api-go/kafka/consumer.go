@@ -1,10 +1,13 @@
 package kafka
 
 import (
+	"champion-api-go/db"
 	"champion-api-go/models"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
+	"time"
 
 	"github.com/IBM/sarama"
 )
@@ -13,7 +16,7 @@ func StartConsumer() {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
 
-	brokers := []string{"localhost:9092"}
+	brokers := []string{"kafka:9092"}
 
 	consumer, err := sarama.NewConsumer(brokers, config)
 	if err != nil {
@@ -55,6 +58,10 @@ func SerializeData(key string, msg []byte) {
 			break
 		}
 		fmt.Println("Player reçu :", player.GameName)
+		err = db.SavePlayer(player)
+		if err != nil {
+			log.Println("DB error:", err)
+		}
 
 	case "match":
 		var match models.MatchSummaryDTO
@@ -65,7 +72,36 @@ func SerializeData(key string, msg []byte) {
 		}
 		fmt.Println("Match reçu :", match.MatchID)
 
+		err = db.SaveMatch(match)
+		if err != nil {
+			log.Println("Match DB error:", err)
+			break
+		}
+
+		err = db.SaveParticipants(match.MatchID, match.Participants)
+		if err != nil {
+			log.Println("Participant DB error:", err)
+		}
+
+		err = db.SaveParticipantDetail(match.MatchID, *match.RequestingPlayer)
+		if err != nil {
+			log.Println("ParticipantDetail DB error:", err)
+		}
+
 	default:
 		log.Println("Type inconnu :", string(msg))
 	}
+}
+
+func WaitKafka(broker string) {
+	for i := 0; i < 20; i++ {
+		conn, err := net.DialTimeout("tcp", broker, 2*time.Second)
+		if err == nil {
+			conn.Close()
+			return
+		}
+		log.Println("waiting Kafka...")
+		time.Sleep(2 * time.Second)
+	}
+	log.Fatal("Kafka not ready")
 }

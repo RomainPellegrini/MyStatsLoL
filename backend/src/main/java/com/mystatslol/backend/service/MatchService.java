@@ -66,7 +66,7 @@ public class MatchService {
         log.info("Last matchId for puuid={} : {}", puuid, matchId);
 
         if (!matchRepository.existsByMatchId(matchId)) {
-           return stockMatch(matchId,puuid);
+           stockMatch(matchId,puuid);
         }
 
 
@@ -87,7 +87,7 @@ public class MatchService {
         MatchRiotDTO matchDto = mapper.convertValue(matchMap, MatchRiotDTO.class);
 
         Match match = matchfromRiotDTO(matchDto);
-        matchRepository.save(match);
+     //   matchRepository.save(match);
 
         log.info("Match {} saved to DB.", matchId);
 

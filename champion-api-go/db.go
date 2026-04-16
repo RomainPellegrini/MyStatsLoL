@@ -1,12 +1,12 @@
 package main
 
 import (
+	"champion-api-go/db"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -14,16 +14,16 @@ var DB *sql.DB
 
 func InitDB() {
 	// Charger le .env (chemin relatif)
-	err := godotenv.Load("../.env")
+	/*err := godotenv.Load("../.env")
 	if err != nil {
 		log.Fatal("Erreur chargement .env")
-	}
+	}*/
 
 	// Récupérer les variables
 	user := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
 	dbname := os.Getenv("POSTGRES_DB")
-	host := "localhost"
+	host := "postgres"
 	port := "5432"
 
 	// Construire la string de connexion
@@ -44,4 +44,6 @@ func InitDB() {
 	}
 
 	fmt.Println("✅ Connected to PostgreSQL")
+
+	db.DB = DB
 }
