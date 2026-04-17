@@ -11,7 +11,10 @@ import (
 
 func main() {
 	InitDB()
-	go kafka.WaitKafka(os.Getenv("KAFKA_BROKER"))
+	env := os.Getenv("APP_ENV")
+	if env == "docker" {
+		go kafka.WaitKafka(os.Getenv("KAFKA_BROKER"))
+	}
 	go kafka.StartConsumer()
 
 	r := gin.Default()

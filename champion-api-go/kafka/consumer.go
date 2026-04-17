@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -15,9 +16,14 @@ import (
 func StartConsumer() {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = true
+	var brokers []string
+	env := os.Getenv("APP_ENV")
 
-	brokers := []string{"kafka:9092"}
-
+	if env != "docker" {
+		brokers = []string{"localhost:9092"}
+	} else {
+		brokers = []string{"kafka:9092"}
+	}
 	consumer, err := sarama.NewConsumer(brokers, config)
 	if err != nil {
 		log.Fatal(err)

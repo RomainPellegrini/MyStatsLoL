@@ -18,6 +18,6 @@ public class KafkaProducerService {
     }
     public void sendMatch(MatchSummaryDTO match) {
         kafkaTemplate.send("mystatslolTopic", "match", match);
-        System.out.println("MATCH ENVOYEEEEEE");
+
     }
 }

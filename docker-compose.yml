@@ -72,6 +72,7 @@ services:
       postgres:
         condition: service_started
     environment:
+      APP_ENV: docker
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
