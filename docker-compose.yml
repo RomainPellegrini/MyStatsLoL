@@ -80,6 +80,15 @@ services:
       KAFKA_BROKER: kafka:9092
     ports:
       - "8081:8081"
+  
+  frontend:
+    build: ./Front-MyStatsLol-Angular
+    container_name: frontend
+    ports:
+      - "4200:4200"
+    depends_on:
+      - riot-service
+    restart: always
 
 volumes:
   postgres_data:
