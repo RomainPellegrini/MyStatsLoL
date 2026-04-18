@@ -28,6 +28,8 @@ class PlayerServiceTest {
 
     @Mock
     private RiotApiClient riotApiClient;
+    @Mock
+    private KafkaProducerService kafkaProducerService;
 
     @InjectMocks
     private PlayerService playerService;
@@ -49,6 +51,7 @@ class PlayerServiceTest {
         assertEquals("EUW", result.tagLine());
 
         verify(playerRepository, times(1)).save(any(Player.class));
+        verify(kafkaProducerService, times(1)).sendPlayer(any(PlayerDTO.class));
     }
 
     @Test
@@ -68,6 +71,7 @@ class PlayerServiceTest {
         assertEquals("EUW", result.tagLine());
 
         verify(playerRepository, times(1)).save(any(Player.class));
+        verify(kafkaProducerService, times(1)).sendPlayer(any(PlayerDTO.class));
     }
 
     @Test
